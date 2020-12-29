@@ -51,8 +51,9 @@ class AppWindow:
                                        pady=5,
                                        padx=5)
         self.firstCountry: Entry = Entry(self.selectOneWindowFrame,
-                                         pady=5,
-                                         padx=5)
+                                         # pady=5,
+                                         # padx=5)
+                                         )
         self.confirmButton_2: Button = Button(self.selectOneWindowFrame,
                                               text="Confirm",
                                               highlightcolor="blue",
@@ -70,12 +71,14 @@ class AppWindow:
                                                     pady=5,
                                                     padx=5)
         self.firstCountry_2: Entry = Entry(self.compareWindowFrame,
-                                           pady=5,
-                                           padx=5)
+                                           # pady=5,
+                                           # padx=5)
+                                           )
         self.comparingCountry: Entry = Entry(self.compareWindowFrame,
-                                             pady=5,
-                                             padx=5)
-        self.confirmButton_2: Button = Button(self.compareWindowFrame,
+                                             # pady=5,
+                                             # padx=5)
+                                             )
+        self.confirmButton_3: Button = Button(self.compareWindowFrame,
                                               text="Confirm",
                                               highlightcolor="blue",
                                               justify="center",
@@ -108,7 +111,7 @@ class AppWindow:
         if self.radioButton.get() == "SINGLE":
             self.inputLabel.grid(row=0, column=0)
             self.firstCountry.grid(row=0, column=1)
-            self.confirmButton.grid(row=1, column=1)
+            self.confirmButton_2.grid(row=1, column=1)
             self.selectOneWindowFrame.mainloop()
 
         elif self.radioButton.get() == "CMP":
@@ -116,7 +119,7 @@ class AppWindow:
             self.inputLabelCompareSecond.grid(row=1, column=0)
             self.firstCountry_2.grid(row=0, column=1)
             self.comparingCountry.grid(row=1, column=1)
-            self.confirmButton_2.grid(row=2, column=1)
+            self.confirmButton_3.grid(row=2, column=1)
             self.compareWindowFrame.mainloop()
         else:
             pass
