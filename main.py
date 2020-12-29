@@ -8,16 +8,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import *
 # Chrome options
 from selenium.webdriver.chrome.options import Options
-
 """data visualization"""
 import matplotlib.pyplot as plt
 import numpy as np
-
 """paralellism"""
-import threading
+# import threading
 
+# TODO migrate gui from Kivy to Tkinter!
 
-# adds parallelism /// pretty useless rn
+# adds parallelism /// pretty useless rn    TODO: asyncio?
 # class MyThread(threading.Thread):
 #     def __init__(self, threadName: str):
 #         threading.Thread.__init__(self)
@@ -50,12 +49,11 @@ class DataDownloader:
         DRIVER.get("https://data.oecd.org/conversion/exchange-rates.htm")
 
         # sets time period we want to download our data for   /// pretty useless rn
-
+        # TODO: find out / code moving mouse emulator!
     # def set_time_period(self, timePeriod: list, frequency: str = "yearly") -> "changes time period shown in table":
     #     websiteTimePeriod = [
     #         WebDriverWait(DRIVER, TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, "start"))).text,
     #         WebDriverWait(DRIVER, TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, "end"))).text]
-
 
     def get_table_header(self) -> list:
         """while connected with website by __init__ this method is searching through the main table for it's header
@@ -160,12 +158,13 @@ class ChartGenerator:
         secondCountryIndex = countryList.index(secondCountry)
         ChartGenerator.clear_input(data[countryIndex], data[secondCountryIndex])
         # print(len(data[secondCountryIndex]), len(data[countryIndex]))
-        """God has abandoned lines above skip them and be happy that it works"""
+        """God has abandoned lines below skip them and be happy that it works"""
         fig, host, = plt.subplots()
         # print(data[countryIndex], data[secondCountryIndex], time)
         p1, = host.plot(['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
                          '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019'], np.array(data[countryIndex]),
                         "b-", label=chosenCountry)
+        # TODO: while showing off code explain issues with array dimensions in _base.py
         p2, = host.plot(['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
                          '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019'],
                         np.array(data[secondCountryIndex]), "r-", label=secondCountry)
