@@ -1,20 +1,29 @@
-"""Selenium modules"""
-from selenium import webdriver  # main driver import
-from selenium.webdriver.common.by import By     # BY locating
-# Se web driver await for load
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-# Se error handling
-from selenium.common.exceptions import *
-# Chrome options
-from selenium.webdriver.chrome.options import Options
-"""data visualization"""
-import matplotlib.pyplot as plt
-import numpy as np
-"""paralellism"""
-# import threading
+"""Python built in"""
+import ctypes
+from ctypes.wintypes import HWND, LPWSTR, UINT
 
-# TODO migrate gui from Kivy to Tkinter!
+"""Installed via pip / modules of the app"""
+try:
+    """Selenium modules"""
+    from selenium import webdriver  # main driver import
+    from selenium.webdriver.common.by import By     # BY locating
+    # Se web driver await for load
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    # Se error handling
+    from selenium.common.exceptions import *
+    # Chrome options
+    from selenium.webdriver.chrome.options import Options
+    """data visualization"""
+    import matplotlib.pyplot as plt
+    import numpy as np
+    """paralellism"""
+    # import threading
+    """gui stuff"""
+    from tk_gui import AppWindow
+except ImportError as e:
+    ctypes.windll.user32.MessageBoxW(0, f"During program execution following error occurred:\n{e}", "Error!", 0x10)
+    exit(1)
 
 # adds parallelism /// pretty useless rn    TODO: asyncio?
 # class MyThread(threading.Thread):
@@ -236,17 +245,29 @@ def comparing_country(dd: list):
 
 if __name__ == "__main__":
     """code execution goes brrrrr"""
-    try:
-        dd = download_data()
-        DRIVER.quit()
-        while True:
-            chartSelect = input("Single [s] or comparing? [c]")
-            if chartSelect.lower() == "s":
-                single_country(dd)
-            elif chartSelect.lower() == "c":
-                comparing_country(dd)
-            elif chartSelect.lower() == "q":
-                exit()
-    except KeyboardInterrupt:
-        exit()
+    msgBox = ctypes.windll.user32.MessageBoxW(0, f"Downloading data, please wait...", "Loading", 0x01)
+    dd = download_data()    # download data
+    if msgBox == 2:  # if canceled
+        exit(-1)
+    appWindow = AppWindow()
+    appWindow.hello_window()
+
+
+
+
+
+
+    # try:
+    #     dd = download_data()
+    #     DRIVER.quit()
+    #     while True:
+    #         chartSelect = input("Single [s] or comparing? [c]")
+    #         if chartSelect.lower() == "s":
+    #             single_country(dd)
+    #         elif chartSelect.lower() == "c":
+    #             comparing_country(dd)
+    #         elif chartSelect.lower() == "q":
+    #             exit()
+    # except KeyboardInterrupt:
+    #     exit()
 """Hooray!"""

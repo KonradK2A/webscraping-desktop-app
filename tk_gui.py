@@ -1,5 +1,7 @@
 from tkinter import *
-from _tkinter import *
+from tkinter import Frame
+
+import ctypes
 
 
 class AppWindow:
@@ -7,14 +9,25 @@ class AppWindow:
         self.root = Tk(className="Webscraping desktop app")
         self.root.geometry("300x300")
 
-        # set window frames
-        self.firstWindowFrame = Frame(self.root)
+        # app widgets and frames
+        try:
+            self.frames()
+            self.widgets_initialize()
+        except NameError:
+            exit(1)
+
+    # define window frames
+    def frames(self):
+        self.downloadingDataInfoFrame = Frame(self.root)
+        self.firstWindowFrame: Frame = Frame(self.root)
         self.firstWindowFrame.grid()
-        self.selectOneWindowFrame = Frame(self.root)
-        self.selectOneWindowFrame.grid()
-        self.compareWindowFrame = Frame(self.root)
+        self.selectCountryWindow: Frame = Frame(self.root)
+        self.selectCountryWindow.grid()
+        self.compareWindowFrame: Frame = Frame(self.root)
         self.compareWindowFrame.grid()
 
+    # define widgets
+    def widgets_initialize(self):
         self.radioButton = StringVar()
         self.radioButton.set(" ")
 
@@ -40,90 +53,72 @@ class AppWindow:
                                             pady=5,
                                             command=self.confirm_button_onclick)
 
-        # self.goBackButton: Button = Button(self.root,
-        #                                    text="<-- Back",
-        #                                    command=self.put_on_grid()
-        #                                    )
+        self.goBackButton: Button = Button(self.selectCountryWindow,
+                                           text="<-- Back",
+                                           command=self.hello_window,
+                                           padx=5,
+                                           pady=5)
 
-        """Second window on radio button - single country (shown if conditions met)"""
-        self.inputLabel: Label = Label(self.selectOneWindowFrame,
-                                       text="Choose country:",
-                                       pady=5,
-                                       padx=5)
-        self.firstCountry: Entry = Entry(self.selectOneWindowFrame,
-                                         # pady=5,
-                                         # padx=5)
-                                         )
-        self.confirmButton_2: Button = Button(self.selectOneWindowFrame,
+        """Second window on radio button"""
+        self.firstCountryLabel: Label = Label(self.selectCountryWindow,
+                                              text="Choose country:",
+                                              pady=5,
+                                              padx=5)
+        self.firstCountryEntry: Entry = Entry(self.selectCountryWindow)
+        self.runScriptButton: Button = Button(self.selectCountryWindow,
                                               text="Confirm",
                                               highlightcolor="blue",
                                               justify="center",
                                               pady=5,
                                               command="")   # TODO fill the command
-
-        """Second window on radio button - compare (shown if conditions met)"""
-        self.inputLabelCompare: Label = Label(self.compareWindowFrame,
-                                              text="Choose first country: ",
-                                              pady=5,
-                                              padx=5)
-        self.inputLabelCompareSecond: Label = Label(self.compareWindowFrame,
-                                                    text="Choose second country: ",
-                                                    pady=5,
-                                                    padx=5)
-        self.firstCountry_2: Entry = Entry(self.compareWindowFrame,
-                                           # pady=5,
-                                           # padx=5)
-                                           )
-        self.comparingCountry: Entry = Entry(self.compareWindowFrame,
-                                             # pady=5,
-                                             # padx=5)
-                                             )
-        self.confirmButton_3: Button = Button(self.compareWindowFrame,
-                                              text="Confirm",
-                                              highlightcolor="blue",
-                                              justify="center",
-                                              pady=5,
-                                              command="")  # TODO fill the command
+        self.secondCountryLabel: Label = Label(self.selectCountryWindow,
+                                               text="Select second country",
+                                               pady=5,
+                                               padx=5)
+        self.secondCountryEntry: Entry = Entry(self.selectCountryWindow)
 
     @staticmethod
-    def destroy_frame(frame: "window frame") -> "while used destroys frame":
+    def forget_frame(frame: "window frame") -> "while used destroys frame":
         frame.grid_forget()
         # frame.destroy()
 
+    # Replaced with ctypes box
+    # @staticmethod
+    # def window_on_error(parentWindow: Frame):
+    #     errorLabel: Label = Label(parentWindow, text="Woopsie! Something went wrong.\n"
+    #                                             "Quitting application",
+    #                               justify="center")
+
     def hello_window(self) -> "buttons are put on grid":
-        # try:
-        #     self.destroy_frame(self.selectOneWindowFrame)
-        # except TclError as e:
-        #     print(e)
-        #     try:
-        #         self.destroy_frame(self.radioCompareCountry)
-        #     except TclError:
-        #         pass
-        # finally:
-        self.helloLabel.grid(row=0)
-        self.radioSingleCountry.grid(row=1)
-        self.radioCompareCountry.grid(row=2)
-        self.confirmButton.grid(row=3)
+        # if not self.isFirstRun:
+        #     self.forget_frame(self.selectCountryWindow)
+        self.helloLabel.grid(row=0, column=0)
+        self.radioSingleCountry.grid(row=1, column=0)
+        self.radioCompareCountry.grid(row=2, column=0)
+        self.confirmButton.grid(row=3, column=0)
         self.firstWindowFrame.mainloop()
 
     def confirm_button_onclick(self) -> "Changes the layout of the window":
-        self.destroy_frame(self.firstWindowFrame)
+        self.forget_frame(self.firstWindowFrame)
         if self.radioButton.get() == "SINGLE":
-            self.inputLabel.grid(row=0, column=0)
-            self.firstCountry.grid(row=0, column=1)
-            self.confirmButton_2.grid(row=1, column=1)
-            self.selectOneWindowFrame.mainloop()
-
+            self.firstCountryLabel.grid(row=0, column=0)
+            self.firstCountryEntry.grid(row=0, column=1)
+            self.runScriptButton.grid(row=1, column=1)
+            self.goBackButton.grid(row=2, column=1)
         elif self.radioButton.get() == "CMP":
-            self.inputLabelCompare.grid(row=0, column=0)
-            self.inputLabelCompareSecond.grid(row=1, column=0)
-            self.firstCountry_2.grid(row=0, column=1)
-            self.comparingCountry.grid(row=1, column=1)
-            self.confirmButton_3.grid(row=2, column=1)
-            self.compareWindowFrame.mainloop()
+            self.firstCountryLabel.grid(row=0, column=0)
+            self.secondCountryLabel.grid(row=1, column=0)
+            self.firstCountryEntry.grid(row=0, column=1)
+            self.secondCountryEntry.grid(row=1, column=1)
+            self.runScriptButton.grid(row=2, column=1)
+            self.goBackButton.grid(row=3, column=0)
         else:
-            pass
-            # TODO throw custom exception
+            ctypes.windll.user32.MessageBoxW(0, f"Application raised a warning.",
+                                             "Warining!", 0x10)
+        self.selectCountryWindow.mainloop()
+
+    def return_values(self):
+        return [self.radioButton.get(), self.firstCountryEntry, self.secondCountryEntry]
 
 
 if __name__ == "__main__":
