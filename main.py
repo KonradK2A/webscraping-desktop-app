@@ -1,12 +1,13 @@
 """Python built in"""
 import ctypes
-from ctypes.wintypes import HWND, LPWSTR, UINT
+
+# from ctypes.wintypes import HWND, LPWSTR, UINT
 
 """Installed via pip / modules of the app"""
 try:
     """Selenium modules"""
     from selenium import webdriver  # main driver import
-    from selenium.webdriver.common.by import By     # BY locating
+    from selenium.webdriver.common.by import By  # BY locating
     # Se web driver await for load
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
@@ -14,25 +15,23 @@ try:
     from selenium.common.exceptions import *
     # Chrome options
     from selenium.webdriver.chrome.options import Options
+
     """data visualization"""
     import matplotlib.pyplot as plt
     import numpy as np
-    """paralellism"""
+
+    """paralellism / asynchronous IO"""
     # import threading
+    # import asyncio
     """gui stuff"""
     from tk_gui import AppWindow
+    import asyncio
 except ImportError as e:
     ctypes.windll.user32.MessageBoxW(0, f"During program execution following error occurred:\n{e}", "Error!", 0x10)
     exit(1)
 
-# adds parallelism /// pretty useless rn    TODO: asyncio?
-# class MyThread(threading.Thread):
-#     def __init__(self, threadName: str):
-#         threading.Thread.__init__(self)
-#         self.threadName = threadName
 
-
-#     def run(self):
+# TODO asyncio?
 
 
 class DataDownloader:
@@ -46,73 +45,75 @@ class DataDownloader:
 
     chrome arguments are arguments for chrome driver that allows it to run headless on windows (recommended not crucial)
     """
+
     def __init__(self):
-        global DRIVER
-        global TIMEOUT
-        TIMEOUT = 10  # timeout in seconds
+        self.TIMEOUT = 10  # timeout in seconds
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--log-level=3")
-        DRIVER = webdriver.Chrome(options=chrome_options)
-        DRIVER.get("https://data.oecd.org/conversion/exchange-rates.htm")
+        self.DRIVER = webdriver.Chrome(options=chrome_options)
+        self.DRIVER.get("https://data.oecd.org/conversion/exchange-rates.htm")
+
+        self.dataHeaderYear = []
+        self.fullData = []
+        self.dataHeaderCountry = []
 
         # sets time period we want to download our data for   /// pretty useless rn
         # TODO: find out / code moving mouse emulator!
+
     # def set_time_period(self, timePeriod: list, frequency: str = "yearly") -> "changes time period shown in table":
     #     websiteTimePeriod = [
-    #         WebDriverWait(DRIVER, TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, "start"))).text,
-    #         WebDriverWait(DRIVER, TIMEOUT).until(EC.presence_of_element_located((By.CLASS_NAME, "end"))).text]
+    #         WebDriverWait(self.DRIVER, self.TIMEOUT)
+    #             .until(EC.presence_of_element_located((By.CLASS_NAME, "start"))).text,
+    #         WebDriverWait(self.DRIVER, self.TIMEOUT)
+    #             .until(EC.presence_of_element_located((By.CLASS_NAME, "end"))).text
+    #     ]
 
-    def get_table_header(self) -> list:
+    def get_table_header(self) -> None:
         """while connected with website by __init__ this method is searching through the main table for it's header
         and saves it temporally as a list type with str elements"""
-        tableHead = WebDriverWait(DRIVER, TIMEOUT).until(
+        tableHead = WebDriverWait(self.DRIVER, self.TIMEOUT).until(
             EC.presence_of_element_located((By.CLASS_NAME, "table-chart-thead")))
         thHeadRows = tableHead.find_elements(By.TAG_NAME, "tr")
-        dataHeaderYear = []
         for thRow in thHeadRows:
             thCol = thRow.find_elements(By.TAG_NAME, "th")
             for thData in thCol:
-                dataHeaderYear.append(thData.text.replace("▾ ", ""))
-        dataHeaderYear.pop(0)
+                self.dataHeaderYear.append(thData.text.replace("▾ ", ""))
+        self.dataHeaderYear.pop(0)
 
-        return dataHeaderYear
-
-    def get_country_header(self) -> list:
+    def get_country_header(self) -> None:
         """while connected with website by __init__ this method is searching through the main table for countries
         that whole data is about, returns a list with a str elements"""
-        tableLocator = WebDriverWait(DRIVER, TIMEOUT).until(
+        tableLocator = WebDriverWait(self.DRIVER, self.TIMEOUT).until(
             EC.presence_of_element_located((By.CLASS_NAME, "table-chart-tbody")))
         rows = tableLocator.find_elements(By.TAG_NAME, "tr")
-        dataHeaderCountry = []
         for row in rows:
             thCol = row.find_elements(By.TAG_NAME, "th")
             for thData in thCol:
-                dataHeaderCountry.append(thData.text)
+                self.dataHeaderCountry.append(thData.text)
 
-        return dataHeaderCountry
-
-    def get_table_data(self) -> list:
+    def get_table_data(self) -> None:
         """while connected with website by __init__ this method is searching through the main table for the main data
         (data for all countries in database OCED shown on website) returns list of lists which contain strings
         convertible for float type"""
-        tableLocator = WebDriverWait(DRIVER, TIMEOUT).until(
+        tableLocator = WebDriverWait(self.DRIVER, self.TIMEOUT).until(
             EC.presence_of_element_located((By.CLASS_NAME, "table-chart-tbody")))
         rows = tableLocator.find_elements(By.TAG_NAME, "tr")
-        fullData = []
         for row in rows:
-            dataOfCountry = []  # helper list that saves data of one coutry
+            dataOfCountry = []  # helper list that saves data of one country
             col = row.find_elements(By.TAG_NAME, "td")
             for data in col:
                 dataOfCountry.append(data.text)
-            fullData.append(dataOfCountry)
+            self.fullData.append(dataOfCountry)
 
-        return fullData
+    def return_downloads(self) -> list:
+        return [self.dataHeaderYear, self.dataHeaderCountry, self.fullData]
 
 
 class ChartGenerator:
     """gets given data and makes a plt from it, handy dandy thing supported fully by matplotlib and numpy module"""
+
     @staticmethod
     def clear_input(*args: "list I guess but it's so spaghetti that idk even know for now") -> "clean data lists":
         """executed inside methods that create charts to clean up the data:
@@ -138,7 +139,7 @@ class ChartGenerator:
         countryIndex = countryList.index(chosenCountry)
         ChartGenerator.clear_input(data[countryIndex])
 
-        plt.plot(time, data[countryIndex], color="k", marker="o")   # plot line
+        plt.plot(time, data[countryIndex], color="k", marker="o")  # plot line
         # just some descriptions and visuals
         plt.ylabel("Value\n(National currency units/US dollar)")
         plt.xlabel("Year")
@@ -154,16 +155,16 @@ class ChartGenerator:
             plt.yticks(np.arange(0, max(data[countryIndex]) + step * 100, step * 100))
         else:
             pass
-        plt.plot(figsize=(6.4 * 2, 4.8 * 2))    # ???
+        plt.plot(figsize=(6.4 * 2, 4.8 * 2))  # ???
         plt.gcf().canvas.set_window_title(f"Single chart for {chosenCountry}")  # window label
         plt.show()
 
     @staticmethod
-    def comparing_chart(chosenCountry: str, secondCountry: str,
+    def comparing_chart(firstCountry: str, secondCountry: str,
                         countryList: list, data: list, time: list) -> "window with comparing plt chart":
         """same as above but for two countries at once to compare their NCU/USD rates, no flexible step here as it'd be
         inefficient to use it as a chart labeling determinant"""
-        countryIndex = countryList.index(chosenCountry)
+        countryIndex = countryList.index(firstCountry)
         secondCountryIndex = countryList.index(secondCountry)
         ChartGenerator.clear_input(data[countryIndex], data[secondCountryIndex])
         # print(len(data[secondCountryIndex]), len(data[countryIndex]))
@@ -172,7 +173,7 @@ class ChartGenerator:
         # print(data[countryIndex], data[secondCountryIndex], time)
         p1, = host.plot(['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
                          '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019'], np.array(data[countryIndex]),
-                        "b-", label=chosenCountry)
+                        "b-", label=firstCountry)
         # TODO: while showing off code explain issues with array dimensions in _base.py
         p2, = host.plot(['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
                          '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019'],
@@ -184,78 +185,67 @@ class ChartGenerator:
 
         plt.ylabel("Value\n(National currency units/US dollar)")
         plt.xlabel("Year")
-        plt.title(f"Values for {chosenCountry} and {secondCountry}")
-        plt.gcf().canvas.set_window_title(f"Comparing {chosenCountry} and {secondCountry}")
+        plt.title(f"Values for {firstCountry} and {secondCountry}")
+        plt.gcf().canvas.set_window_title(f"Comparing {firstCountry} and {secondCountry}")
         plt.show()
 
         """if code works do not ask where it was stolen from
                                 ~ Confucius "Art of War" """
 
 
-def download_data() -> list:
-    """uh... like it helps executing classes above, thats all"""
-    print("Please wait... Downloading data!\n")
-    DD = DataDownloader()
-    # print(DD.get_table_data())
-    return [DD.get_table_data(), DD.get_country_header(), DD.get_table_header()]
+class MainRunner:
+    @staticmethod
+    def download_data() -> list:
+        """uh... like it helps executing classes above, that's all"""
+        print("Please wait... Downloading data!\n")
+        DD = DataDownloader()
+        # print(DD.get_table_data())
+        return [DD.get_table_data(), DD.get_country_header(), DD.get_table_header()]
 
-
-def single_country(dd: list):
-    """uh... like it helps executing classes above, that's all"""
-    for country in dd[1]:
-        print(country)
-    while True:
-        chosenCountry = input("Choose a country from one of the above: \n")
-        if chosenCountry.lower() == "q":
-            exit()
-        if chosenCountry not in dd[1]:
+    @staticmethod
+    def single_country(dd: list, firstCountry: str):
+        """uh... like it helps executing classes above, that's all"""
+        for country in dd[1]:
+            print(country)
+        if firstCountry not in dd[1]:
             print("Selected country does not exist in the database, try again.")
-            continue
-        break
 
-    cGen = ChartGenerator
-    cGen.single_chart(chosenCountry=chosenCountry, countryList=dd[1], data=dd[0], time=dd[2])
+        cGen = ChartGenerator
+        cGen.single_chart(chosenCountry=firstCountry, countryList=dd[1], data=dd[0], time=dd[2])
 
-
-def comparing_country(dd: list):
-    """uh... like it helps executing classes above, that's all"""
-    for country in dd[1]:
-        print(country)
-    while True:
-        chosenCountry = input("Choose a country from one of the above: \n")
-        if chosenCountry.lower() == "q":
-            exit()
-        elif chosenCountry not in dd[1]:
-            print("Selected country does not exist in the database, try again.")
-            continue
-        break
-    while True:
-        secondCountry = input("Choose a country from one of the above: \n")
-        if secondCountry.lower() == "q":
-            exit()
-        elif secondCountry not in dd[1]:
-            print("Selected country does not exist in the database, try again.")
-            continue
-        break
-
-    cGen = ChartGenerator
-    cGen.comparing_chart(chosenCountry=chosenCountry, secondCountry=secondCountry,
-                         countryList=dd[1], data=dd[0], time=[2])
+    @staticmethod
+    def comparing_country(dd: list, firstCountry: str, secondCountry: str):
+        """uh... like it helps executing classes above, that's all"""
+        cGen = ChartGenerator
+        cGen.comparing_chart(firstCountry=firstCountry, secondCountry=secondCountry,
+                             countryList=dd[1], data=dd[0], time=[2])
 
 
 if __name__ == "__main__":
     """code execution goes brrrrr"""
-    msgBox = ctypes.windll.user32.MessageBoxW(0, f"Downloading data, please wait...", "Loading", 0x01)
-    dd = download_data()    # download data
-    if msgBox == 2:  # if canceled
-        exit(-1)
+    msgBox = ctypes.windll.user32\
+        .MessageBoxW(0, f"Data will be downloaded. Do you want to proceed?", "Data download", 0x01)
+    dd = MainRunner.download_data()  # download data
+    # if msgBox == 2:  # if canceled
+    #     exit(-1)
     appWindow = AppWindow()
     appWindow.hello_window()
-
-
-
-
-
+    mode = appWindow.return_values()[0]
+    if mode == "SINGLE":
+        firstCountry = appWindow.return_values()[1]
+        MainRunner.single_country(dd, firstCountry=firstCountry)
+    elif mode == "CMP":
+        firstCountry, secondCountry = appWindow.return_values()[1], \
+                                      appWindow.return_values()[2]
+        MainRunner.comparing_country(dd, firstCountry=firstCountry, secondCountry=secondCountry)
+    else:
+        try:
+            raise ctypes.windll.user32.MessageBoxW(0, f"Application raised an error.",
+                                                   "Warning!", 0x10)
+        except:
+            print("This is so fatal error that I don't even know how I am supposed to handle it")
+        finally:
+            exit(69)
 
     # try:
     #     dd = download_data()
