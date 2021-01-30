@@ -6,7 +6,7 @@ import ctypes
 
 class AppWindow:
     def __init__(self):
-        self.root = Tk(className="Webscraping desktop app")
+        self.root = Tk(className="WebScraping desktop app")
         self.root.geometry("300x300")
 
         # app widgets and frames
@@ -17,7 +17,7 @@ class AppWindow:
             exit(1)
 
     # define window frames
-    def frames(self):
+    def frames(self) -> "frames punt on grid":
         self.downloadingDataInfoFrame = Frame(self.root)
         self.firstWindowFrame: Frame = Frame(self.root)
         self.firstWindowFrame.grid()
@@ -27,7 +27,7 @@ class AppWindow:
         self.compareWindowFrame.grid()
 
     # define widgets
-    def widgets_initialize(self):
+    def widgets_initialize(self) -> "widgets defined":
         self.radioButton = StringVar()
         self.radioButton.set(" ")
 
@@ -70,7 +70,7 @@ class AppWindow:
                                               highlightcolor="blue",
                                               justify="center",
                                               pady=5,
-                                              command="")   # TODO fill the command
+                                              command=self.return_values)
         self.secondCountryLabel: Label = Label(self.selectCountryWindow,
                                                text="Select second country",
                                                pady=5,
@@ -80,18 +80,8 @@ class AppWindow:
     @staticmethod
     def forget_frame(frame: "window frame") -> "while used destroys frame":
         frame.grid_forget()
-        # frame.destroy()
-
-    # Replaced with ctypes box
-    # @staticmethod
-    # def window_on_error(parentWindow: Frame):
-    #     errorLabel: Label = Label(parentWindow, text="Woopsie! Something went wrong.\n"
-    #                                             "Quitting application",
-    #                               justify="center")
 
     def hello_window(self) -> "buttons are put on grid":
-        # if not self.isFirstRun:
-        #     self.forget_frame(self.selectCountryWindow)
         self.helloLabel.grid(row=0, column=0)
         self.radioSingleCountry.grid(row=1, column=0)
         self.radioCompareCountry.grid(row=2, column=0)
@@ -104,23 +94,24 @@ class AppWindow:
             self.firstCountryLabel.grid(row=0, column=0)
             self.firstCountryEntry.grid(row=0, column=1)
             self.runScriptButton.grid(row=1, column=1)
-            self.goBackButton.grid(row=2, column=1)
+            # self.goBackButton.grid(row=2, column=1)
         elif self.radioButton.get() == "CMP":
             self.firstCountryLabel.grid(row=0, column=0)
             self.secondCountryLabel.grid(row=1, column=0)
             self.firstCountryEntry.grid(row=0, column=1)
             self.secondCountryEntry.grid(row=1, column=1)
             self.runScriptButton.grid(row=2, column=1)
-            self.goBackButton.grid(row=3, column=0)
+            # self.goBackButton.grid(row=3, column=0)
         else:
-            ctypes.windll.user32.MessageBoxW(0, f"Application raised a warning.",
-                                             "Warining!", 0x10)
-        self.selectCountryWindow.mainloop()
+            raise ctypes.windll.user32.MessageBoxW(0, f"Application raised an error.",
+                                                   "Warning!", 0x10)
+        # self.selectCountryWindow.mainloop()
+        self.selectCountryWindow.update()
 
     def return_values(self):
-        return [self.radioButton.get(), self.firstCountryEntry, self.secondCountryEntry]
-
-
-if __name__ == "__main__":
-    AW = AppWindow()
-    AW.hello_window()
+        if self.radioButton.get() == "SINGLE":
+            self.selectCountryWindow.quit()
+            return [self.radioButton.get(), self.firstCountryEntry.get()]
+        elif self.radioButton.get() == "CMP":
+            self.selectCountryWindow.quit()
+            return [self.radioButton.get(), self.firstCountryEntry.get(), self.secondCountryEntry.get()]

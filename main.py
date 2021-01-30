@@ -1,7 +1,7 @@
-"""Python built in"""
-import ctypes
+"""This is the 1.0.0 version of the application made by Konrad Kihan"""
 
-# from ctypes.wintypes import HWND, LPWSTR, UINT
+"""Python built ins"""
+import ctypes
 
 """Installed via pip / modules of the app"""
 try:
@@ -20,12 +20,8 @@ try:
     import matplotlib.pyplot as plt
     import numpy as np
 
-    """paralellism / asynchronous IO"""
-    # import threading
-    # import asyncio
     """gui stuff"""
     from tk_gui import AppWindow
-    import asyncio
 except ImportError as e:
     ctypes.windll.user32.MessageBoxW(0, f"During program execution following error occurred:\n{e}", "Error!", 0x10)
     exit(1)
@@ -47,7 +43,7 @@ class DataDownloader:
     """
 
     def __init__(self):
-        self.TIMEOUT = 10  # timeout in seconds
+        self.TIMEOUT: int = 10  # timeout in seconds
         chrome_options = Options()
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
@@ -55,9 +51,9 @@ class DataDownloader:
         self.DRIVER = webdriver.Chrome(options=chrome_options)
         self.DRIVER.get("https://data.oecd.org/conversion/exchange-rates.htm")
 
-        self.dataHeaderYear = []
-        self.fullData = []
-        self.dataHeaderCountry = []
+        self.dataHeaderYear: list = []
+        self.fullData: list = []
+        self.dataHeaderCountry: list = []
 
         # sets time period we want to download our data for   /// pretty useless rn
         # TODO: find out / code moving mouse emulator!
@@ -70,7 +66,7 @@ class DataDownloader:
     #             .until(EC.presence_of_element_located((By.CLASS_NAME, "end"))).text
     #     ]
 
-    def get_table_header(self) -> None:
+    def get_table_header(self) -> list:
         """while connected with website by __init__ this method is searching through the main table for it's header
         and saves it temporally as a list type with str elements"""
         tableHead = WebDriverWait(self.DRIVER, self.TIMEOUT).until(
@@ -82,7 +78,9 @@ class DataDownloader:
                 self.dataHeaderYear.append(thData.text.replace("▾ ", ""))
         self.dataHeaderYear.pop(0)
 
-    def get_country_header(self) -> None:
+        return self.dataHeaderYear
+
+    def get_country_header(self) -> list:
         """while connected with website by __init__ this method is searching through the main table for countries
         that whole data is about, returns a list with a str elements"""
         tableLocator = WebDriverWait(self.DRIVER, self.TIMEOUT).until(
@@ -93,7 +91,9 @@ class DataDownloader:
             for thData in thCol:
                 self.dataHeaderCountry.append(thData.text)
 
-    def get_table_data(self) -> None:
+        return self.dataHeaderCountry
+
+    def get_table_data(self) -> list:
         """while connected with website by __init__ this method is searching through the main table for the main data
         (data for all countries in database OCED shown on website) returns list of lists which contain strings
         convertible for float type"""
@@ -107,8 +107,7 @@ class DataDownloader:
                 dataOfCountry.append(data.text)
             self.fullData.append(dataOfCountry)
 
-    def return_downloads(self) -> list:
-        return [self.dataHeaderYear, self.dataHeaderCountry, self.fullData]
+        return self.fullData
 
 
 class ChartGenerator:
@@ -155,7 +154,7 @@ class ChartGenerator:
             plt.yticks(np.arange(0, max(data[countryIndex]) + step * 100, step * 100))
         else:
             pass
-        plt.plot(figsize=(6.4 * 2, 4.8 * 2))  # ???
+        plt.plot(figsize=(6.4 * 2, 4.8 * 2))
         plt.gcf().canvas.set_window_title(f"Single chart for {chosenCountry}")  # window label
         plt.show()
 
@@ -167,21 +166,39 @@ class ChartGenerator:
         countryIndex = countryList.index(firstCountry)
         secondCountryIndex = countryList.index(secondCountry)
         ChartGenerator.clear_input(data[countryIndex], data[secondCountryIndex])
-        # print(len(data[secondCountryIndex]), len(data[countryIndex]))
-        """God has abandoned lines below skip them and be happy that it works"""
+        """God has abandoned lines below skip them and be happy that it works
+        thy matplotlib raises an error when the array same as in case of single_country is put, so to
+        help  executing the app time values are hardcoded"""
         fig, host, = plt.subplots()
-        # print(data[countryIndex], data[secondCountryIndex], time)
-        p1, = host.plot(['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
-                         '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019'], np.array(data[countryIndex]),
-                        "b-", label=firstCountry)
-        # TODO: while showing off code explain issues with array dimensions in _base.py
-        p2, = host.plot(['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
-                         '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019'],
-                        np.array(data[secondCountryIndex]), "r-", label=secondCountry)
+        try:
+            p1, = host.plot(time,
+                            np.array(data[countryIndex]),
+                            "b-", label=firstCountry)
 
-        lines = [p1, p2]
+        except ValueError:
+            time = ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011',
+                    '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020']
+        try:
+            p2, = host.plot(time,
+                            np.array(data[secondCountryIndex][0:len(time) + 1]),
+                            "r-", label=secondCountry)
 
-        host.legend(lines, [l.get_label() for l in lines])
+        except ValueError:
+            pass
+        finally:
+            p1, = host.plot(time,
+                            np.array(data[countryIndex][0:len(time) + 1]),
+                            "b-", label=firstCountry)
+            p2, = host.plot(time,
+                            np.array(data[secondCountryIndex][0:len(time) + 1]),
+                            "r-", label=secondCountry)
+
+            lines = [p1, p2]
+
+            try:
+                host.legend(lines, [i.get_label() for i in lines])
+            except IndexError:
+                exit(2)
 
         plt.ylabel("Value\n(National currency units/US dollar)")
         plt.xlabel("Year")
@@ -194,70 +211,51 @@ class ChartGenerator:
 
 
 class MainRunner:
+    """clarifies code execution and helps to execute the DataDownloader and ChartGenerator"""
+
     @staticmethod
     def download_data() -> list:
-        """uh... like it helps executing classes above, that's all"""
-        print("Please wait... Downloading data!\n")
         DD = DataDownloader()
-        # print(DD.get_table_data())
         return [DD.get_table_data(), DD.get_country_header(), DD.get_table_header()]
 
     @staticmethod
     def single_country(dd: list, firstCountry: str):
-        """uh... like it helps executing classes above, that's all"""
-        for country in dd[1]:
-            print(country)
         if firstCountry not in dd[1]:
-            print("Selected country does not exist in the database, try again.")
+            raise ctypes.windll.user32.MessageBoxW(0, f"No such country in the database.",
+                                                   "Warning!", 0x10)
 
         cGen = ChartGenerator
         cGen.single_chart(chosenCountry=firstCountry, countryList=dd[1], data=dd[0], time=dd[2])
 
     @staticmethod
     def comparing_country(dd: list, firstCountry: str, secondCountry: str):
-        """uh... like it helps executing classes above, that's all"""
         cGen = ChartGenerator
         cGen.comparing_chart(firstCountry=firstCountry, secondCountry=secondCountry,
-                             countryList=dd[1], data=dd[0], time=[2])
+                             countryList=dd[1], data=dd[0], time=dd[2])
 
 
 if __name__ == "__main__":
     """code execution goes brrrrr"""
-    msgBox = ctypes.windll.user32\
+    msgBox = ctypes.windll.user32 \
         .MessageBoxW(0, f"Data will be downloaded. Do you want to proceed?", "Data download", 0x01)
     dd = MainRunner.download_data()  # download data
-    # if msgBox == 2:  # if canceled
-    #     exit(-1)
     appWindow = AppWindow()
     appWindow.hello_window()
-    mode = appWindow.return_values()[0]
+    guiValuesReturned = appWindow.return_values()
+    mode = guiValuesReturned[0]
     if mode == "SINGLE":
-        firstCountry = appWindow.return_values()[1]
+        firstCountry = guiValuesReturned[1]
         MainRunner.single_country(dd, firstCountry=firstCountry)
     elif mode == "CMP":
-        firstCountry, secondCountry = appWindow.return_values()[1], \
-                                      appWindow.return_values()[2]
+        firstCountry, secondCountry = guiValuesReturned[1], guiValuesReturned[2]
         MainRunner.comparing_country(dd, firstCountry=firstCountry, secondCountry=secondCountry)
     else:
         try:
             raise ctypes.windll.user32.MessageBoxW(0, f"Application raised an error.",
                                                    "Warning!", 0x10)
         except:
-            print("This is so fatal error that I don't even know how I am supposed to handle it")
+            raise ctypes.windll.user32.MessageBoxW(0, f"Application raised error so critical that even it's creator"
+                                                      f"didn't expect that to happen!.",
+                                                   "Error!", 0x10)
         finally:
-            exit(69)
-
-    # try:
-    #     dd = download_data()
-    #     DRIVER.quit()
-    #     while True:
-    #         chartSelect = input("Single [s] or comparing? [c]")
-    #         if chartSelect.lower() == "s":
-    #             single_country(dd)
-    #         elif chartSelect.lower() == "c":
-    #             comparing_country(dd)
-    #         elif chartSelect.lower() == "q":
-    #             exit()
-    # except KeyboardInterrupt:
-    #     exit()
-"""Hooray!"""
+            exit(1)
